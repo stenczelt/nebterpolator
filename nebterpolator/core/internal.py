@@ -18,6 +18,7 @@ import numpy as np
 
 __all__ = ['bonds', 'angles', 'dihedrals']
 
+
 ##############################################################################
 # Functions
 ##############################################################################
@@ -65,7 +66,7 @@ def bonds(xyzlist, ibonds):
 
     diff = xyzlist[:, ibonds[:, 0], :] - xyzlist[:, ibonds[:, 1], :]
 
-    return np.sqrt(np.sum(diff**2, axis=2))
+    return np.sqrt(np.sum(diff ** 2, axis=2))
 
 
 def angles(xyzlist, iangles):
@@ -115,8 +116,8 @@ def angles(xyzlist, iangles):
     vector2 = xyzlist[:, iangles[:, 2], :] - xyzlist[:, iangles[:, 1], :]
 
     # norm of the two vectors
-    norm1 = np.sqrt(np.sum(vector1**2, axis=2))
-    norm2 = np.sqrt(np.sum(vector2**2, axis=2))
+    norm1 = np.sqrt(np.sum(vector1 ** 2, axis=2))
+    norm2 = np.sqrt(np.sum(vector2 ** 2, axis=2))
 
     dot = np.sum(np.multiply(vector1, vector2), axis=2)
     return np.arccos(dot / (norm1 * norm2))
@@ -175,7 +176,7 @@ def dihedrals(xyzlist, idihedrals, anchor=None):
     cross2 = np.cross(vec1, vec2)
 
     arg1 = np.sum(np.multiply(vec1, cross1), axis=2) * \
-        np.sqrt(np.sum(vec2**2, axis=2))
+           np.sqrt(np.sum(vec2 ** 2, axis=2))
     arg2 = np.sum(np.multiply(cross1, cross2), axis=2)
 
     answer = np.arctan2(arg1, arg2)
@@ -186,9 +187,9 @@ def dihedrals(xyzlist, idihedrals, anchor=None):
         for i in range(answer.shape[0]):
             for j in range(answer.shape[1]):
                 if answer[i, j] - anchor[j] > np.pi:
-                    answer[i, j] -= 2*np.pi
+                    answer[i, j] -= 2 * np.pi
                 elif answer[i, j] - anchor[j] < -np.pi:
-                    answer[i, j] += 2*np.pi
+                    answer[i, j] += 2 * np.pi
 
     return answer
 
@@ -203,6 +204,7 @@ def main():
 
     idihedrals = [[0, 1, 2, 3]]
     print(dihedrals(xyzlist, idihedrals))
+
 
 if __name__ == '__main__':
     main()

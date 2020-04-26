@@ -17,6 +17,7 @@ VECTOR1 = np.array([1, -1, 1]) / np.sqrt(3)
 VECTOR2 = np.array([-1, 1, 1]) / np.sqrt(3)
 __all__ = ['bond_derivs', 'angle_derivs', 'dihedral_derivs']
 
+
 ##############################################################################
 # Functions
 ##############################################################################
@@ -140,7 +141,7 @@ def angle_derivs(xyz, iangles):
             w_prime = np.cross(u, v)
 
         w = w_prime / np.linalg.norm(w_prime)
-        
+
         term1 = np.cross(u, w) / u_norm
         term2 = np.cross(w, v) / v_norm
 
@@ -211,10 +212,10 @@ def dihedral_derivs(xyz, idihedrals):
         w = w_prime / w_norm
         v = v_prime / v_norm
 
-        term1 = np.cross(u, w) / (u_norm * (1 - np.dot(u, w)**2))
-        term2 = np.cross(v, w) / (v_norm * (1 - np.dot(v, w)**2))
-        term3 = np.cross(u, w) * np.dot(u, w) / (w_norm * (1 - np.dot(u, w)**2))
-        term4 = np.cross(v, w) * np.dot(v, w) / (w_norm * (1 - np.dot(v, w)**2))
+        term1 = np.cross(u, w) / (u_norm * (1 - np.dot(u, w) ** 2))
+        term2 = np.cross(v, w) / (v_norm * (1 - np.dot(v, w) ** 2))
+        term3 = np.cross(u, w) * np.dot(u, w) / (w_norm * (1 - np.dot(u, w) ** 2))
+        term4 = np.cross(v, w) * np.dot(v, w) / (w_norm * (1 - np.dot(v, w) ** 2))
 
         derivatives[d, m, :] = term1
         derivatives[d, n, :] = -term2
@@ -229,6 +230,7 @@ def main():
     iangles = [[0, 1, 2], [2, 3, 4]]
 
     print(angle_derivs(xyz, iangles).shape)
+
 
 if __name__ == '__main__':
     main()

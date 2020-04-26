@@ -7,13 +7,12 @@
 
 # library imports
 import numpy as np
-import sys
-from scipy.optimize import leastsq, fmin, fmin_l_bfgs_b
-from .molecule import Molecule
-from .morse_function import PairwiseMorse
+from scipy.optimize import fmin_l_bfgs_b
 
 # local imports
 from . import core
+from .molecule import Molecule
+from .morse_function import PairwiseMorse
 
 ##############################################################################
 # Globals
@@ -21,12 +20,13 @@ from . import core
 
 __all__ = ['least_squares_cartesian']
 
+
 ##############################################################################
 # Functions
 ##############################################################################
 
 def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
-                                  idihedrals, xyz_guess, elem, w_morse, **kwargs):
+                            idihedrals, xyz_guess, elem, w_morse, **kwargs):
     """Determine a set of cartesian coordinates maximally-consistent with
     a set of redundant internal coordinates.
 
@@ -92,8 +92,8 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         The RMS deviation across internal DOFs
     """
 
-    #if not have_molecule:
-        #raise ImportError('The least_squares_cartesian function requires the molecule module')
+    # if not have_molecule:
+    # raise ImportError('The least_squares_cartesian function requires the molecule module')
 
     # TODO: expose the ability to set a weight vector over the different
     # internal coordinates that sets how they contribute to the objective
@@ -122,7 +122,7 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
     def independent_vars_to_xyz(x):
         if x.ndim != 1:
             raise TypeError('independent variables must be 1d')
-        if len(x) != 3*n_atoms - 6:
+        if len(x) != 3 * n_atoms - 6:
             raise TypeError('Must be 3N-6 independent variables')
 
         xyz = np.zeros((n_atoms, 3))
@@ -136,14 +136,14 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         xyz[1, 2] = x[0]
         xyz[2, 1] = x[1]
         xyz[2, 2] = x[2]
-        xyz[3:, :] = x[3:].reshape(n_atoms-3, 3)
+        xyz[3:, :] = x[3:].reshape(n_atoms - 3, 3)
 
         return xyz
 
     def xyz_to_independent_vars(xyz):
         special_indices = [5, 7, 8]
 
-        x = np.zeros(3*n_atoms - 6)
+        x = np.zeros(3 * n_atoms - 6)
         flat = xyz.flatten()
         x[0:3] = flat[special_indices]
         x[3:] = flat[9:]
@@ -152,7 +152,7 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
 
     def gxyz_to_independent_vars(grad):
         special_indices = [5, 7, 8]
-        g = np.zeros((grad.shape[0], 3*n_atoms - 6), dtype=float)
+        g = np.zeros((grad.shape[0], 3 * n_atoms - 6), dtype=float)
         g[:, 0:3] = grad[:, special_indices]
         g[:, 3:] = grad[:, 9:]
 
@@ -163,12 +163,13 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
     else:
         xrefi = None
 
-    wdeg = (180.0 / np.pi) / 30 # Number of degrees in a radian, divided by our somewhat arbitrary choice of what constitutes a "major" deviation in angle.
-    w1 = 10.0 # Angstrom is a somewhat natural unit of bonds.
-    w2 = wdeg * np.sqrt(len(bonds)) / np.sqrt(len(angles)) # Keep radian but normalize to the number of bonds.
-    w3 = wdeg * np.sqrt(len(bonds)) / np.sqrt(len(dihedrals)) # Keep radian but normalize to the number of bonds.
+    wdeg = (
+                       180.0 / np.pi) / 30  # Number of degrees in a radian, divided by our somewhat arbitrary choice of what constitutes a "major" deviation in angle.
+    w1 = 10.0  # Angstrom is a somewhat natural unit of bonds.
+    w2 = wdeg * np.sqrt(len(bonds)) / np.sqrt(len(angles))  # Keep radian but normalize to the number of bonds.
+    w3 = wdeg * np.sqrt(len(bonds)) / np.sqrt(len(dihedrals))  # Keep radian but normalize to the number of bonds.
 
-    def fgrad(x, indicate = False):
+    def fgrad(x, indicate=False):
         """ Calculate the objective function and its derivatives. """
         # If the optimization algorithm tries to calculate twice for the same point, do nothing.
         # if x == fgrad.x0: return
@@ -181,9 +182,9 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         my_dihedrals = core.dihedrals(xyzlist, idihedrals, anchor=dihedrals).flatten()
 
         # Deviations of internal coordinates from ideal values.
-        d1 = w1*(my_bonds - bonds)
-        d2 = w2*(my_angles - angles)
-        d3 = w3*(my_dihedrals - dihedrals)
+        d1 = w1 * (my_bonds - bonds)
+        d2 = w2 * (my_angles - angles)
+        d3 = w3 * (my_dihedrals - dihedrals)
 
         # Include an optional term if we have an anchor point.
         if xrefi != None:
@@ -199,7 +200,7 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         d3s = np.dot(d3, d3)
         M = Molecule()
         M.elem = elem
-        M.xyzs = [np.array(xyz)*10]
+        M.xyzs = [np.array(xyz) * 10]
         if w_morse != 0.0:
             EMorse, GMorse = PairwiseMorse(M)
             EMorse = EMorse[0]
@@ -207,18 +208,21 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         else:
             EMorse = 0.0
             GMorse = np.zeros((n_atoms, 3), dtype=float)
-        if indicate: 
+        if indicate:
             if fgrad.X0 != None:
-                print(("LSq: %.4f (%+.4f) Distance: %.4f (%+.4f) Angle: %.4f (%+.4f) Dihedral: %.4f (%+.4f) Morse: % .4f (%+.4f)" % 
-                       (fgrad.X, fgrad.X - fgrad.X0, d1s, d1s - fgrad.d1s0, d2s, d2s - fgrad.d2s0, d3s, d3s - fgrad.d3s0, EMorse, EMorse - fgrad.EM0)), end=' ') 
+                print((
+                                  "LSq: %.4f (%+.4f) Distance: %.4f (%+.4f) Angle: %.4f (%+.4f) Dihedral: %.4f (%+.4f) Morse: % .4f (%+.4f)" %
+                                  (fgrad.X, fgrad.X - fgrad.X0, d1s, d1s - fgrad.d1s0, d2s, d2s - fgrad.d2s0, d3s,
+                                   d3s - fgrad.d3s0, EMorse, EMorse - fgrad.EM0)), end=' ')
             else:
-                print("LSq: %.4f Distance: %.4f Angle: %.4f Dihedral: %.4f Morse: % .4f" % (fgrad.X, d1s, d2s, d3s, EMorse), end=' ') 
+                print("LSq: %.4f Distance: %.4f Angle: %.4f Dihedral: %.4f Morse: % .4f" % (
+                fgrad.X, d1s, d2s, d3s, EMorse), end=' ')
                 fgrad.X0 = fgrad.X
                 fgrad.d1s0 = d1s
                 fgrad.d2s0 = d2s
                 fgrad.d3s0 = d3s
                 fgrad.EM0 = EMorse
-        fgrad.X += w_morse*EMorse
+        fgrad.X += w_morse * EMorse
 
         # Derivatives of internal coordinates w/r.t. Cartesian coordinates.
         d_bonds = core.bond_derivs(xyz, ibonds) * w1
@@ -242,8 +246,9 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         # print fgrad.error.shape, d_internal.shape
         # print d_internal.shape
         # print xyz_to_independent_vars(d_internal).shape
-        fgrad.G = 2*np.dot(fgrad.error, d_internal)
-        fgrad.G += xyz_to_independent_vars(w_morse*GMorse.flatten())
+        fgrad.G = 2 * np.dot(fgrad.error, d_internal)
+        fgrad.G += xyz_to_independent_vars(w_morse * GMorse.flatten())
+
     fgrad.do_G = False
     fgrad.x0 = None
     fgrad.error = None
@@ -252,8 +257,8 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
     fgrad.X0 = None
     fgrad.EM0 = None
 
-    def func(x, indicate = False):
-        fgrad(x, indicate = indicate)
+    def func(x, indicate=False):
+        fgrad(x, indicate=indicate)
         return fgrad.X
 
     def grad(x):
@@ -266,14 +271,15 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
     # the 3N-6 correctly
     np.testing.assert_equal(independent_vars_to_xyz(x0), xyz_guess)
 
-    #====
+    # ====
     # Finite difference code to check that gradients are correct!
-    #====
+    # ====
     def fdwrap(x_, idx):
         def func1(arg):
             x1 = x_.copy()
             x1[idx] += arg
             return func(x1)
+
         return func1
 
     def f1d7p(f, h):
@@ -281,8 +287,8 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         A highly accurate seven-point finite difference stencil
         for computing derivatives of a function.  
         """
-        fm3, fm2, fm1, f1, f2, f3 = [f(i*h) for i in [-3, -2, -1, 1, 2, 3]]
-        fp = (f3-9*f2+45*f1-45*fm1+9*fm2-fm3)/(60*h)
+        fm3, fm2, fm1, f1, f2, f3 = [f(i * h) for i in [-3, -2, -1, 1, 2, 3]]
+        fp = (f3 - 9 * f2 + 45 * f1 - 45 * fm1 + 9 * fm2 - fm3) / (60 * h)
         return fp
 
     FDCheck = False
@@ -292,17 +298,18 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         print("Analytic Gradient (Initial):", AGrad)
         print("Error in Gradient:", FDGrad - AGrad)
         input()
-    #====
+    # ====
     # End finite difference code
-    #====
-        
-    print("Initial:", end=' ') 
-    func(x0, indicate = True)
+    # ====
+
+    print("Initial:", end=' ')
+    func(x0, indicate=True)
     print()
     # try:
-    xf, ff, d = fmin_l_bfgs_b(func,x0,fprime=grad,m=30,factr=1e7,pgtol=1e-4,iprint=-1,disp=0,maxfun=1e5,maxiter=1e5)
-    print("Final:", end=' ') 
-    func(xf, indicate = True)
+    xf, ff, d = fmin_l_bfgs_b(func, x0, fprime=grad, m=30, factr=1e7, pgtol=1e-4, iprint=-1, disp=0, maxfun=1e5,
+                              maxiter=1e5)
+    print("Final:", end=' ')
+    func(xf, indicate=True)
     print()
     if FDCheck:
         AGrad = grad(xf)
@@ -321,8 +328,8 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
 
 def main():
     from .path_operations import union_connectivity
-    #np.random.seed(42)
-    xyzlist = 0.1*np.random.randn(7, 5, 3)
+    # np.random.seed(42)
+    xyzlist = 0.1 * np.random.randn(7, 5, 3)
     atom_names = ['C' for i in range(5)]
 
     ibonds, iangles, idihedrals = union_connectivity(xyzlist, atom_names)
@@ -331,12 +338,13 @@ def main():
     angles = core.angles(xyzlist, iangles)
     dihedrals = core.dihedrals(xyzlist, idihedrals)
 
-    xyz_guess = xyzlist[0] + 0.025*np.random.rand(*xyzlist[0].shape)
+    xyz_guess = xyzlist[0] + 0.025 * np.random.rand(*xyzlist[0].shape)
     x = least_squares_cartesian(bonds[0], ibonds, angles[0], iangles,
                                 dihedrals[0], idihedrals, xyz_guess)
 
     print(x)
-    #print xyzlist[0]
+    # print xyzlist[0]
+
 
 if __name__ == '__main__':
     main()

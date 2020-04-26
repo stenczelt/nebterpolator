@@ -7,8 +7,10 @@
 
 # library imports
 import itertools
-import numpy as np
 from datetime import datetime
+
+import numpy as np
+
 
 ##############################################################################
 # Classes
@@ -135,7 +137,7 @@ class XYZFile(object):
 
         for i in range(n_atoms):
             line = '%-4s %14.10f %14.10f %14.10f\n' % \
-                (atom_names[i], xyz[i, 0], xyz[i, 1], xyz[i, 2])
+                   (atom_names[i], xyz[i, 0], xyz[i, 1], xyz[i, 2])
             self._handle.write(line)
 
     def write_trajectory(self, xyzlist, atom_names):

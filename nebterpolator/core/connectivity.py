@@ -6,10 +6,11 @@ Routines to etermine the bond/angle/dihedral connectivity in a molecular graph.
 # Imports
 ##############################################################################
 
+from itertools import combinations
+
+import networkx as nx
 import numpy as np
 from scipy.spatial.distance import squareform, pdist
-import networkx as nx
-from itertools import combinations
 
 ##############################################################################
 # GLOBALS
@@ -21,21 +22,29 @@ from itertools import combinations
 # COVALENT_RADII = {'C': 0.0762, 'N': 0.0706, 'O': 0.0661, 'H': 0.031,
 #                   'S': 0.105}
 
-COVALENT_RADII = {'H': 0.031, 'He': 0.028, 
-                  'Li': 0.128, 'Be': 0.096, 'B': 0.084, 'C': 0.076, 'N': 0.071, 'O': 0.066, 'F': 0.057, 'Ne': 0.058, 
-                  'Na': 0.166, 'Mg': 0.141, 'Al': 0.121, 'Si': 0.111, 'P': 0.107, 'S': 0.105, 'Cl': 0.102, 'Ar': 0.106, 
-                  'K': 0.203, 'Ca': 0.176, 'Sc': 0.170, 'Ti': 0.160, 'V': 0.153, 'Cr': 0.139, 'Mn': 0.161, 'Fe': 0.152, 'Co': 0.150, 
-                  'Ni': 0.124, 'Cu': 0.132, 'Zn': 0.122, 'Ga': 0.122, 'Ge': 0.120, 'As': 0.119, 'Se': 0.120, 'Br': 0.120, 'Kr': 0.116, 
-                  'Rb': 0.220, 'Sr': 0.195, 'Y': 0.190, 'Zr': 0.175, 'Nb': 0.164, 'Mo': 0.154, 'Tc': 0.147, 'Ru': 0.146, 'Rh': 0.142, 
-                  'Pd': 0.139, 'Ag': 0.145, 'Cd': 0.144, 'In': 0.142, 'Sn': 0.139, 'Sb': 0.139, 'Te': 0.138, 'I': 0.139, 'Xe': 0.140, 
-                  'Cs': 0.244, 'Ba': 0.215, 'La': 0.207, 'Ce': 0.204, 'Pr': 0.203, 'Nd': 0.201, 'Pm': 0.199, 'Sm': 0.198, 
-                  'Eu': 0.198, 'Gd': 0.196, 'Tb': 0.194, 'Dy': 0.192, 'Ho': 0.192, 'Er': 0.189, 'Tm': 0.190, 'Yb': 0.187, 
-                  'Lu': 0.187, 'Hf': 0.175, 'Ta': 0.170, 'W': 0.162, 'Re': 0.151, 'Os': 0.144, 'Ir': 0.141, 'Pt': 0.136, 
-                  'Au': 0.136, 'Hg': 0.132, 'Tl': 0.145, 'Pb': 0.146, 'Bi': 0.148, 'Po': 0.140, 'At': 0.150, 'Rn': 0.150, 
-                  'Fr': 0.260, 'Ra': 0.221, 'Ac': 0.215, 'Th': 0.206, 'Pa': 0.200, 'U': 0.196, 'Np': 0.190, 'Pu': 0.187, 
+COVALENT_RADII = {'H': 0.031, 'He': 0.028,
+                  'Li': 0.128, 'Be': 0.096, 'B': 0.084, 'C': 0.076, 'N': 0.071, 'O': 0.066, 'F': 0.057, 'Ne': 0.058,
+                  'Na': 0.166, 'Mg': 0.141, 'Al': 0.121, 'Si': 0.111, 'P': 0.107, 'S': 0.105, 'Cl': 0.102, 'Ar': 0.106,
+                  'K': 0.203, 'Ca': 0.176, 'Sc': 0.170, 'Ti': 0.160, 'V': 0.153, 'Cr': 0.139, 'Mn': 0.161, 'Fe': 0.152,
+                  'Co': 0.150,
+                  'Ni': 0.124, 'Cu': 0.132, 'Zn': 0.122, 'Ga': 0.122, 'Ge': 0.120, 'As': 0.119, 'Se': 0.120,
+                  'Br': 0.120, 'Kr': 0.116,
+                  'Rb': 0.220, 'Sr': 0.195, 'Y': 0.190, 'Zr': 0.175, 'Nb': 0.164, 'Mo': 0.154, 'Tc': 0.147, 'Ru': 0.146,
+                  'Rh': 0.142,
+                  'Pd': 0.139, 'Ag': 0.145, 'Cd': 0.144, 'In': 0.142, 'Sn': 0.139, 'Sb': 0.139, 'Te': 0.138, 'I': 0.139,
+                  'Xe': 0.140,
+                  'Cs': 0.244, 'Ba': 0.215, 'La': 0.207, 'Ce': 0.204, 'Pr': 0.203, 'Nd': 0.201, 'Pm': 0.199,
+                  'Sm': 0.198,
+                  'Eu': 0.198, 'Gd': 0.196, 'Tb': 0.194, 'Dy': 0.192, 'Ho': 0.192, 'Er': 0.189, 'Tm': 0.190,
+                  'Yb': 0.187,
+                  'Lu': 0.187, 'Hf': 0.175, 'Ta': 0.170, 'W': 0.162, 'Re': 0.151, 'Os': 0.144, 'Ir': 0.141, 'Pt': 0.136,
+                  'Au': 0.136, 'Hg': 0.132, 'Tl': 0.145, 'Pb': 0.146, 'Bi': 0.148, 'Po': 0.140, 'At': 0.150,
+                  'Rn': 0.150,
+                  'Fr': 0.260, 'Ra': 0.221, 'Ac': 0.215, 'Th': 0.206, 'Pa': 0.200, 'U': 0.196, 'Np': 0.190, 'Pu': 0.187,
                   'Am': 0.180, 'Cm': 0.169}
 
 __all__ = ['bond_connectivity', 'angle_connectivity', 'dihedral_connectivity']
+
 
 ##############################################################################
 # Functions
@@ -87,7 +96,7 @@ def bond_connectivity(xyz, atom_names, enhance=1.3):
         # name of the element that is atom[i]
         # take the first character of the AtomNames string,
         # after stripping off any digits
-        proper_atom_names[i] = atom_names[i].strip('123456789 ')#[0]
+        proper_atom_names[i] = atom_names[i].strip('123456789 ')  # [0]
         if not proper_atom_names[i] in list(COVALENT_RADII.keys()):
             raise ValueError("I don't know about this atom_name: %s" %
                              atom_names[i])
@@ -96,7 +105,7 @@ def bond_connectivity(xyz, atom_names, enhance=1.3):
     connectivity = []
 
     for i in range(n_atoms):
-        for j in range(i+1, n_atoms):
+        for j in range(i + 1, n_atoms):
             # Regular bonds are assigned to all pairs of atoms where
             # the interatomic distance is less than or equal to 1.3 times the
             # sum of their respective covalent radii.

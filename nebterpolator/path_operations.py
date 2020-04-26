@@ -5,16 +5,16 @@
 # Imports
 ##############################################################################
 
+import itertools
+
 # library imports
 import numpy as np
-import itertools
-from scipy.interpolate import UnivariateSpline
 
 # local imports
 from . import core
 from .alignment import align_trajectory
-from .smoothing import buttersworth_smooth, angular_smooth, window_smooth
 from .inversion import least_squares_cartesian
+from .smoothing import angular_smooth, window_smooth
 
 ##############################################################################
 # Globals
@@ -84,18 +84,18 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
     s_angles = np.zeros_like(angles)
     s_dihedrals = np.zeros_like(dihedrals)
     for i in range(bonds.shape[1]):
-        #s_bonds[:, i] = buttersworth_smooth(bonds[:, i], width=bond_width)
+        # s_bonds[:, i] = buttersworth_smooth(bonds[:, i], width=bond_width)
         s_bonds[:, i] = window_smooth(bonds[:, i], window_len=bond_width, window='hanning')
     for i in range(angles.shape[1]):
-        #s_angles[:, i] = buttersworth_smooth(angles[:, i], width=angle_width)
+        # s_angles[:, i] = buttersworth_smooth(angles[:, i], width=angle_width)
         s_angles[:, i] = window_smooth(angles[:, i], window_len=angle_width, window='hanning')
     # filter the dihedrals with the angular smoother, that filters
     # the sin and cos components separately
     for i in range(dihedrals.shape[1]):
-        #s_dihedrals[:, i] = angular_smooth(dihedrals[:, i],
+        # s_dihedrals[:, i] = angular_smooth(dihedrals[:, i],
         #    smoothing_func=buttersworth_smooth, width=dihedral_width)
         s_dihedrals[:, i] = angular_smooth(dihedrals[:, i],
-                                           smoothing_func=window_smooth, 
+                                           smoothing_func=window_smooth,
                                            window_len=dihedral_width, window='hanning')
 
     # compute the inversion for each frame
@@ -111,18 +111,18 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
         while not passed:
             passed = False
             if i > 0:
-                xref = s_xyzlist[i-1]
+                xref = s_xyzlist[i - 1]
             else:
                 xref = None
                 passed = True
             r = least_squares_cartesian(s_bonds[i], ibonds, s_angles[i], iangles,
-                                        s_dihedrals[i], idihedrals, xyz_guess, xref=xref, w_xref=w_xref, 
+                                        s_dihedrals[i], idihedrals, xyz_guess, xref=xref, w_xref=w_xref,
                                         elem=atom_names, w_morse=(0 if i in [0, len(xyzlist_guess) - 1] else w_morse))
             s_xyzlist[i], errors[i] = r
-    
+
             if i > 0:
-                aligned0 = align_trajectory(np.array([xyzlist[i],xyzlist[i-1]]), 0)
-                aligned1 = align_trajectory(np.array([s_xyzlist[i],s_xyzlist[i-1]]), 0)
+                aligned0 = align_trajectory(np.array([xyzlist[i], xyzlist[i - 1]]), 0)
+                aligned1 = align_trajectory(np.array([s_xyzlist[i], s_xyzlist[i - 1]]), 0)
                 maxd0 = np.max(np.abs(aligned0[1] - aligned0[0]))
                 maxd1 = np.max(np.abs(aligned1[1] - aligned1[0]))
                 if maxd0 > 1e-5:
@@ -144,7 +144,7 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
                     if w_xrefs > 0.0:
                         w_xref = w_xrefs
                     else:
-                        w_xref = 2.0**10 / 3.0**10
+                        w_xref = 2.0 ** 10 / 3.0 ** 10
                 else:
                     if w_xref >= 0.99:
                         w_xref += 1.0
@@ -155,10 +155,10 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
         # Print out a message if we had to correct it.
         if corrected:
             print('\rxyz: error %f max(dx) %f jitter %s anchor %f' % (errors[i], maxd1, jit, w_xref))
-        if (i%10) == 0:
+        if (i % 10) == 0:
             print("\rWorking on frame %i / %i" % (i, len(xyzlist_guess)), end=' ')
 
-    #return_value = (interweave(s_xyzlist), interweave(errors))
+    # return_value = (interweave(s_xyzlist), interweave(errors))
     return_value = s_xyzlist, errors
 
     return return_value
@@ -199,9 +199,9 @@ def smooth_cartesian(xyzlist, strength=None, weights=None):
     for i in range(n_atoms):
         for j in range(n_dims):
             y = aligned[:, i, j]
-            #smoothed[:, i, j] = UnivariateSpline(x=t, y=y,
+            # smoothed[:, i, j] = UnivariateSpline(x=t, y=y,
             #                        s=strength, w=weights)(t)
-            smoothed[:, i, j] = window_smooth(aligned[:, i, j], window_len=int(strength)*2+1, window='flat')
+            smoothed[:, i, j] = window_smooth(aligned[:, i, j], window_len=int(strength) * 2 + 1, window='flat')
 
     return align_trajectory(smoothed, which='progressive')
 

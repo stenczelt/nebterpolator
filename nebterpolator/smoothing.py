@@ -16,6 +16,7 @@ from scipy.signal import lfilter, lfilter_zi, filtfilt, butter
 
 __all__ = ['polynomial_smooth', 'window_smooth', 'buttersworth_smooth']
 
+
 ##############################################################################
 # Functions
 ##############################################################################
@@ -42,15 +43,15 @@ def polynomial_smooth(y, x=None, order=2, end_weight=1):
     if x is None:
         x = np.arange(len(y))
 
-    weights = np.r_[end_weight, np.ones(len(x)-2), end_weight]
+    weights = np.r_[end_weight, np.ones(len(x) - 2), end_weight]
 
     def func(p):
         return (np.polyval(p, x) - y) * weights
 
     # need 1 more for the constant, so that order 2 is quadratic
     # (even though it's 3 params)
-    #popt, pcov = curve_fit(func, x, y, p0=np.ones(order+1), sigma=1.0/weights)
-    popt, covp, info, msg, ier = leastsq(func, x0=np.zeros(order+1),
+    # popt, pcov = curve_fit(func, x, y, p0=np.ones(order+1), sigma=1.0/weights)
+    popt, covp, info, msg, ier = leastsq(func, x0=np.zeros(order + 1),
                                          full_output=True)
     return np.polyval(popt, x)
 
@@ -96,17 +97,17 @@ def window_smooth(signal, window_len=11, window='hanning'):
                          "'bartlett', 'blackman'")
 
     # this does a mirroring padding
-    padded = np.r_[2*signal[0] - signal[window_len-1: 0: -1],
+    padded = np.r_[2 * signal[0] - signal[window_len - 1: 0: -1],
                    signal,
-                   2*signal[-1] - signal[-2: -window_len-1: -1]]
+                   2 * signal[-1] - signal[-2: -window_len - 1: -1]]
 
     if window == 'flat':
         w = np.ones(window_len, 'd')
     else:
         w = getattr(np, window)(window_len)
     output = np.convolve(w / w.sum(), padded, mode='valid')
-    
-    return output[(window_len/2):-(window_len/2)]
+
+    return output[(window_len / 2):-(window_len / 2)]
 
 
 def buttersworth_smooth(signal, width=11, order=3):
@@ -138,22 +139,22 @@ def buttersworth_smooth(signal, width=11, order=3):
         return signal
 
     # first pad the signal on the ends
-    pad = int(np.ceil((width + 1)/2)*2 - 1)  # nearest odd integer
+    pad = int(np.ceil((width + 1) / 2) * 2 - 1)  # nearest odd integer
     padded = np.r_[signal[pad - 1: 0: -1], signal, signal[-1: -pad: -1]]
-    #padded = np.r_[[signal[0]]*pad, signal, [signal[-1]]*pad]
+    # padded = np.r_[[signal[0]]*pad, signal, [signal[-1]]*pad]
 
     b, a = butter(order, 2.0 / width)
     # Apply the filter to the width.  Use lfilter_zi to choose the
     # initial condition of the filter.
     zi = lfilter_zi(b, a)
-    z, _ = lfilter(b, a, padded, zi=zi*padded[0])
+    z, _ = lfilter(b, a, padded, zi=zi * padded[0])
     # Apply the filter again, to have a result filtered at an order
     # the same as filtfilt.
-    z2, _ = lfilter(b, a, z, zi=zi*z[0])
+    z2, _ = lfilter(b, a, z, zi=zi * z[0])
     # Use filtfilt to apply the filter.
     output = filtfilt(b, a, padded)
 
-    return output[(pad-1): -(pad-1)]
+    return output[(pad - 1): -(pad - 1)]
 
 
 def angular_smooth(signal, smoothing_func=buttersworth_smooth, **kwargs):
