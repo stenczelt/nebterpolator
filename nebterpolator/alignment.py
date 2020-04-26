@@ -145,20 +145,20 @@ def align_trajectory(xyzlist, which='progressive'):
     return c_xyzlist
 
 
-if __name__ == '__main__':
-    "Some test code"
-
-    N = 40
-    query = np.arange(N)[:, np.newaxis] * np.random.randn(N, 3)
-    target = np.arange(N)[:, np.newaxis] * np.random.randn(N, 3)
-
-    dist, op = kabsch(query, target)
-    print('my rmsd        ', dist)
-
-    from msmbuilder.metrics import RMSD
-    _rmsdcalc = RMSD()
-    t0 = RMSD.TheoData(query[np.newaxis, :, :])
-    t1 = RMSD.TheoData(target[np.newaxis, :, :])
-    print('msmbuilder rmsd', _rmsdcalc.one_to_all(t0, t1, 0)[0])
-
-    print(np.sqrt(np.sum(np.square(target - op(query))) / N))
+# if __name__ == '__main__':
+#     "Some test code"
+#
+#     N = 40
+#     query = np.arange(N)[:, np.newaxis] * np.random.randn(N, 3)
+#     target = np.arange(N)[:, np.newaxis] * np.random.randn(N, 3)
+#
+#     dist, op = kabsch(query, target)
+#     print('my rmsd        ', dist)
+#
+#     from msmbuilder.metrics import RMSD
+#     _rmsdcalc = RMSD()
+#     t0 = RMSD.TheoData(query[np.newaxis, :, :])
+#     t1 = RMSD.TheoData(target[np.newaxis, :, :])
+#     print('msmbuilder rmsd', _rmsdcalc.one_to_all(t0, t1, 0)[0])
+#
+#     print(np.sqrt(np.sum(np.square(target - op(query))) / N))
