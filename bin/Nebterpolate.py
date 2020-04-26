@@ -8,7 +8,9 @@ import argparse
 import os
 import sys
 
-from nebterpolator.io import XYZFile
+import ase.io
+import numpy as np
+
 from nebterpolator.path_operations import smooth_internal, smooth_cartesian
 
 # from nebterpolator.alignment import align_trajectory
@@ -51,11 +53,12 @@ if not FinalSmooth:
 # Script
 ##############################################################################
 
-xyzlist, atom_names = None, None
-with XYZFile(input_filename) as f:
-    xyzlist, atom_names = f.read_trajectory()
-    # angstroms to nm
-    xyzlist *= nm_in_angstrom
+# read the input file
+frames = ase.io.read(input_filename, ":")
+xyzlist = np.array([fr.get_positions() for fr in frames])
+xyzlist *= nm_in_angstrom
+atom_names = frames[0].get_chemical_symbols()
+
 if xyzlist.shape[1] < 4:
     print("Interpolator cannot handle less than four atoms.")
     sys.exit()
@@ -92,8 +95,11 @@ print('Saving output to', output_filename)
 jitter_free = smooth_cartesian(smoothed,
                                strength=xyz_smoothing_strength,
                                weights=1.0 / errors)
-with XYZFile(output_filename, 'w') as f:
-    f.write_trajectory(jitter_free / nm_in_angstrom, atom_names)
-# else:
-#     with XYZFile(output_filename, 'w') as f:
-#         f.write_trajectory(smoothed / nm_in_angstrom, atom_names)
+
+# reset the positions in the file
+final_pos = jitter_free / nm_in_angstrom
+for i, at in enumerate(frames):
+    at.set_positions(final_pos[i])
+
+# write the output file
+ase.io.write(output_filename, frames)

@@ -91,13 +91,15 @@ def bond_connectivity(xyz, atom_names, enhance=1.3):
 
     # TODO: This logic only works for elements that are a single letter
     # If we need to deal with other elements, we can easily generalize it.
-    proper_atom_names = np.zeros(n_atoms, dtype='S2')
+    # atom_names = np.zeros(n_atoms, dtype='S2')
     for i in range(n_atoms):
         # name of the element that is atom[i]
         # take the first character of the AtomNames string,
         # after stripping off any digits
-        proper_atom_names[i] = atom_names[i].strip('123456789 ')  # [0]
-        if not proper_atom_names[i] in list(COVALENT_RADII.keys()):
+        # proper_atom_names[i] = atom_names[i].strip('123456789 ')  # [0]
+        # print("proper_atom_names: {}".format(atom_names))
+        # print("COVALENT_RADII: {}".format(COVALENT_RADII))
+        if atom_names[i] not in COVALENT_RADII.keys():
             raise ValueError("I don't know about this atom_name: %s" %
                              atom_names[i])
 
@@ -110,8 +112,8 @@ def bond_connectivity(xyz, atom_names, enhance=1.3):
             # the interatomic distance is less than or equal to 1.3 times the
             # sum of their respective covalent radii.
             d = distance_mtx[i, j]
-            if d < enhance * (COVALENT_RADII[proper_atom_names[i]] +
-                              COVALENT_RADII[proper_atom_names[j]]):
+            if d < enhance * (COVALENT_RADII[atom_names[i]] +
+                              COVALENT_RADII[atom_names[j]]):
                 connectivity.append((i, j))
 
     return np.array(connectivity)

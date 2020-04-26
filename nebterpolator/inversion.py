@@ -158,13 +158,14 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
 
         return g
 
-    if xref != None:
+    if xref is not None:
         xrefi = xyz_to_independent_vars(xref)
     else:
         xrefi = None
 
-    wdeg = (
-                       180.0 / np.pi) / 30  # Number of degrees in a radian, divided by our somewhat arbitrary choice of what constitutes a "major" deviation in angle.
+    # Number of degrees in a radian, divided by our somewhat arbitrary choice of what constitutes a "major"
+    # deviation in angle.
+    wdeg = (180.0 / np.pi) / 30
     w1 = 10.0  # Angstrom is a somewhat natural unit of bonds.
     w2 = wdeg * np.sqrt(len(bonds)) / np.sqrt(len(angles))  # Keep radian but normalize to the number of bonds.
     w3 = wdeg * np.sqrt(len(bonds)) / np.sqrt(len(dihedrals))  # Keep radian but normalize to the number of bonds.
@@ -187,7 +188,7 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         d3 = w3 * (my_dihedrals - dihedrals)
 
         # Include an optional term if we have an anchor point.
-        if xrefi != None:
+        if xrefi is not None:
             d4 = (x - xrefi).flatten() * w1 * w_xref
             fgrad.error = np.r_[d1, d2, np.arctan2(np.sin(d3), np.cos(d3)), d4]
         else:
@@ -209,14 +210,16 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
             EMorse = 0.0
             GMorse = np.zeros((n_atoms, 3), dtype=float)
         if indicate:
-            if fgrad.X0 != None:
+            if fgrad.X0 is not None:
                 print((
-                                  "LSq: %.4f (%+.4f) Distance: %.4f (%+.4f) Angle: %.4f (%+.4f) Dihedral: %.4f (%+.4f) Morse: % .4f (%+.4f)" %
-                                  (fgrad.X, fgrad.X - fgrad.X0, d1s, d1s - fgrad.d1s0, d2s, d2s - fgrad.d2s0, d3s,
-                                   d3s - fgrad.d3s0, EMorse, EMorse - fgrad.EM0)), end=' ')
+                    "LSq: {:.4f} ({:+.4f}) Distance: {:.4f} ({:+.4f}) Angle: {:.4f} ({:+.4f}) Dihedral: {:.4f} ({:+.4f}) Morse: {: .4f} ({:+.4f})"
+                        .format(fgrad.X, fgrad.X - fgrad.X0, d1s, d1s - fgrad.d1s0, d2s, d2s - fgrad.d2s0, d3s,
+                                d3s - fgrad.d3s0, EMorse, EMorse - fgrad.EM0)), end=' ')
             else:
-                print("LSq: %.4f Distance: %.4f Angle: %.4f Dihedral: %.4f Morse: % .4f" % (
-                fgrad.X, d1s, d2s, d3s, EMorse), end=' ')
+                print("LSq: {:.4f} Distance: {:.4f} Angle: {:.4f} Dihedral: {:.4f} Morse: {: .4f}".format(fgrad.X, d1s,
+                                                                                                          d2s, d3s,
+                                                                                                          EMorse),
+                      end=' ')
                 fgrad.X0 = fgrad.X
                 fgrad.d1s0 = d1s
                 fgrad.d2s0 = d2s
@@ -229,7 +232,7 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
         d_angles = core.angle_derivs(xyz, iangles) * w2
         d_dihedrals = core.dihedral_derivs(xyz, idihedrals) * w3
 
-        if xrefi != None:
+        if xrefi is not None:
             # the derivatives of the internal coordinates wrt the cartesian
             # this is 2d, with shape equal to n_internal x n_cartesian
             d_internal = np.vstack([gxyz_to_independent_vars(d_bonds.reshape((len(ibonds), -1))),
