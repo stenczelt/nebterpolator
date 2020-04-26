@@ -173,11 +173,11 @@ def main():
 
     a = None
     with mpi_root():
-        print 'Initializing a only on rank=%s' % rank
+        print('Initializing a only on rank=%s' % rank)
         a = [1, 2, 3, 4]
     a = comm.bcast(a)
 
-    print 'RANK %s, a=%s' % (rank, a)
+    print('RANK %s, a=%s' % (rank, a))
 
 
 if __name__ == '__main__':

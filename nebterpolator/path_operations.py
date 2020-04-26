@@ -11,10 +11,10 @@ import itertools
 from scipy.interpolate import UnivariateSpline
 
 # local imports
-import core
-from alignment import align_trajectory
-from smoothing import buttersworth_smooth, angular_smooth, window_smooth
-from inversion import least_squares_cartesian
+from . import core
+from .alignment import align_trajectory
+from .smoothing import buttersworth_smooth, angular_smooth, window_smooth
+from .inversion import least_squares_cartesian
 
 ##############################################################################
 # Globals
@@ -68,7 +68,7 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
     angle_width = kwargs.pop('angle_width', width)
     dihedral_width = kwargs.pop('dihedral_width', width)
     xyzlist_guess = kwargs.pop('xyzlist_guess', xyzlist)
-    for key in kwargs.keys():
+    for key in list(kwargs.keys()):
         raise KeyError('Unrecognized key, %s' % key)
 
     ibonds, iangles, idihedrals = None, None, None
@@ -83,15 +83,15 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
     s_bonds = np.zeros_like(bonds)
     s_angles = np.zeros_like(angles)
     s_dihedrals = np.zeros_like(dihedrals)
-    for i in xrange(bonds.shape[1]):
+    for i in range(bonds.shape[1]):
         #s_bonds[:, i] = buttersworth_smooth(bonds[:, i], width=bond_width)
         s_bonds[:, i] = window_smooth(bonds[:, i], window_len=bond_width, window='hanning')
-    for i in xrange(angles.shape[1]):
+    for i in range(angles.shape[1]):
         #s_angles[:, i] = buttersworth_smooth(angles[:, i], width=angle_width)
         s_angles[:, i] = window_smooth(angles[:, i], window_len=angle_width, window='hanning')
     # filter the dihedrals with the angular smoother, that filters
     # the sin and cos components separately
-    for i in xrange(dihedrals.shape[1]):
+    for i in range(dihedrals.shape[1]):
         #s_dihedrals[:, i] = angular_smooth(dihedrals[:, i],
         #    smoothing_func=buttersworth_smooth, width=dihedral_width)
         s_dihedrals[:, i] = angular_smooth(dihedrals[:, i],
@@ -150,13 +150,13 @@ def smooth_internal(xyzlist, atom_names, width, w_morse=0.0, **kwargs):
                         w_xref += 1.0
                     else:
                         w_xref *= 1.5
-                print "jitter %f, trying anchor = %f\r" % (jit, w_xref),
+                print("jitter %f, trying anchor = %f\r" % (jit, w_xref), end=' ')
                 corrected = True
         # Print out a message if we had to correct it.
         if corrected:
-            print '\rxyz: error %f max(dx) %f jitter %s anchor %f' % (errors[i], maxd1, jit, w_xref)
+            print('\rxyz: error %f max(dx) %f jitter %s anchor %f' % (errors[i], maxd1, jit, w_xref))
         if (i%10) == 0:
-            print "\rWorking on frame %i / %i" % (i, len(xyzlist_guess)),
+            print("\rWorking on frame %i / %i" % (i, len(xyzlist_guess)), end=' ')
 
     #return_value = (interweave(s_xyzlist), interweave(errors))
     return_value = s_xyzlist, errors
@@ -265,6 +265,6 @@ def union_connectivity(xyzlist, atom_names):
     idihedrals = np.array(sorted(set_dihedrals, key=lambda e: sum(e)))
 
     # get ALL of the possible bonds
-    ibonds = np.array(list(itertools.combinations(range(xyzlist.shape[1]), 2)))
+    ibonds = np.array(list(itertools.combinations(list(range(xyzlist.shape[1])), 2)))
 
     return ibonds, iangles, idihedrals

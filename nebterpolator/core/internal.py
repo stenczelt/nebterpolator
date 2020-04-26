@@ -196,13 +196,13 @@ def dihedrals(xyzlist, idihedrals, anchor=None):
 def main():
     xyzlist = [[[0, 0, 0], [0, 0, 1], [0, 1, 1], [1, 1, 1]]]
     ibonds = [[0, 1], [2, 3]]
-    print bonds(xyzlist, ibonds)
+    print(bonds(xyzlist, ibonds))
 
     iangles = [[0, 1, 2], [1, 2, 3]]
-    print angles(xyzlist, iangles)
+    print(angles(xyzlist, iangles))
 
     idihedrals = [[0, 1, 2, 3]]
-    print dihedrals(xyzlist, idihedrals)
+    print(dihedrals(xyzlist, idihedrals))
 
 if __name__ == '__main__':
     main()

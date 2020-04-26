@@ -9,11 +9,11 @@
 import numpy as np
 import sys
 from scipy.optimize import leastsq, fmin, fmin_l_bfgs_b
-from molecule import Molecule
-from morse_function import PairwiseMorse
+from .molecule import Molecule
+from .morse_function import PairwiseMorse
 
 # local imports
-import core
+from . import core
 
 ##############################################################################
 # Globals
@@ -105,8 +105,8 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
     verbose = kwargs.pop('verbose', False)
     xref = kwargs.pop('xref', None)
     w_xref = kwargs.pop('w_xref', 1.0)
-    for key in kwargs.keys():
-        print '%s is not a recognized kwarg. ignored' % key
+    for key in list(kwargs.keys()):
+        print('%s is not a recognized kwarg. ignored' % key)
 
     if xyz_guess.ndim != 2:
         raise ValueError('cartesian_guess should be a 2d array')
@@ -209,10 +209,10 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
             GMorse = np.zeros((n_atoms, 3), dtype=float)
         if indicate: 
             if fgrad.X0 != None:
-                print ("LSq: %.4f (%+.4f) Distance: %.4f (%+.4f) Angle: %.4f (%+.4f) Dihedral: %.4f (%+.4f) Morse: % .4f (%+.4f)" % 
-                       (fgrad.X, fgrad.X - fgrad.X0, d1s, d1s - fgrad.d1s0, d2s, d2s - fgrad.d2s0, d3s, d3s - fgrad.d3s0, EMorse, EMorse - fgrad.EM0)), 
+                print(("LSq: %.4f (%+.4f) Distance: %.4f (%+.4f) Angle: %.4f (%+.4f) Dihedral: %.4f (%+.4f) Morse: % .4f (%+.4f)" % 
+                       (fgrad.X, fgrad.X - fgrad.X0, d1s, d1s - fgrad.d1s0, d2s, d2s - fgrad.d2s0, d3s, d3s - fgrad.d3s0, EMorse, EMorse - fgrad.EM0)), end=' ') 
             else:
-                print "LSq: %.4f Distance: %.4f Angle: %.4f Dihedral: %.4f Morse: % .4f" % (fgrad.X, d1s, d2s, d3s, EMorse), 
+                print("LSq: %.4f Distance: %.4f Angle: %.4f Dihedral: %.4f Morse: % .4f" % (fgrad.X, d1s, d2s, d3s, EMorse), end=' ') 
                 fgrad.X0 = fgrad.X
                 fgrad.d1s0 = d1s
                 fgrad.d2s0 = d2s
@@ -289,27 +289,27 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
     if FDCheck:
         AGrad = grad(x0)
         FDGrad = np.array([f1d7p(fdwrap(x0, i), h=0.001) for i in range(len(x0))])
-        print "Analytic Gradient (Initial):", AGrad
-        print "Error in Gradient:", FDGrad - AGrad
-        raw_input()
+        print("Analytic Gradient (Initial):", AGrad)
+        print("Error in Gradient:", FDGrad - AGrad)
+        input()
     #====
     # End finite difference code
     #====
         
-    print "Initial:", 
+    print("Initial:", end=' ') 
     func(x0, indicate = True)
-    print
+    print()
     # try:
     xf, ff, d = fmin_l_bfgs_b(func,x0,fprime=grad,m=30,factr=1e7,pgtol=1e-4,iprint=-1,disp=0,maxfun=1e5,maxiter=1e5)
-    print "Final:", 
+    print("Final:", end=' ') 
     func(xf, indicate = True)
-    print
+    print()
     if FDCheck:
         AGrad = grad(xf)
         FDGrad = np.array([f1d7p(fdwrap(xf, i), h=0.001) for i in range(len(xf))])
-        print "Analytic Gradient (Final):", AGrad
-        print "Error in Gradient:", FDGrad - AGrad
-        raw_input()
+        print("Analytic Gradient (Final):", AGrad)
+        print("Error in Gradient:", FDGrad - AGrad)
+        input()
     xyz_final = independent_vars_to_xyz(xf)
     # except:
     #     raise RuntimeError
@@ -320,7 +320,7 @@ def least_squares_cartesian(bonds, ibonds, angles, iangles, dihedrals,
 
 
 def main():
-    from path_operations import union_connectivity
+    from .path_operations import union_connectivity
     #np.random.seed(42)
     xyzlist = 0.1*np.random.randn(7, 5, 3)
     atom_names = ['C' for i in range(5)]
@@ -335,7 +335,7 @@ def main():
     x = least_squares_cartesian(bonds[0], ibonds, angles[0], iangles,
                                 dihedrals[0], idihedrals, xyz_guess)
 
-    print x
+    print(x)
     #print xyzlist[0]
 
 if __name__ == '__main__':

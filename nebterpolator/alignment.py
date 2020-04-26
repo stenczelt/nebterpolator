@@ -127,7 +127,7 @@ def align_trajectory(xyzlist, which='progressive'):
     # center the conformations
     c_xyzlist = xyzlist - np.mean(xyzlist, axis=1)[:, np.newaxis, :]
 
-    if isinstance(which, basestring):
+    if isinstance(which, str):
         if which == 'progressive':
             progressive = True
         else:
@@ -153,12 +153,12 @@ if __name__ == '__main__':
     target = np.arange(N)[:, np.newaxis] * np.random.randn(N, 3)
 
     dist, op = kabsch(query, target)
-    print 'my rmsd        ', dist
+    print('my rmsd        ', dist)
 
     from msmbuilder.metrics import RMSD
     _rmsdcalc = RMSD()
     t0 = RMSD.TheoData(query[np.newaxis, :, :])
     t1 = RMSD.TheoData(target[np.newaxis, :, :])
-    print 'msmbuilder rmsd', _rmsdcalc.one_to_all(t0, t1, 0)[0]
+    print('msmbuilder rmsd', _rmsdcalc.one_to_all(t0, t1, 0)[0])
 
-    print np.sqrt(np.sum(np.square(target - op(query))) / N)
+    print(np.sqrt(np.sum(np.square(target - op(query))) / N))
