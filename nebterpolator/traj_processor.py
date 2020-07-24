@@ -17,6 +17,26 @@ species_colors = {"H": "k", "C": "tab:gray", "O": "tab:red"}
 
 # node_colros = [species_colors[s] for s in chemical_symbols]
 
+def atoms_to_graph(atoms: ase.Atoms):
+    at_graph = nx.Graph()
+
+    for i, sym in enumerate(atoms.get_chemical_symbols()):
+        at_graph.add_node(i, symbol=sym)
+
+    bonds = bond_connectivity(atoms.get_positions() * 0.1, atoms.get_chemical_symbols())
+    at_graph.add_edges_from(bonds)
+
+    return at_graph
+
+
+def get_molecules_in_graph(at_graph: nx.Graph):
+    subsets = list(nx.connected_components(at_graph))
+    mol_graphs = []
+    for node_set in subsets:
+        mol_graphs.append(at_graph.subgraph(node_set))
+
+    return mol_graphs
+
 
 def get_connectivity_change(frames):
     """Finds where changes happened in the connectivity of a trajectory.
@@ -36,10 +56,7 @@ def get_connectivity_change(frames):
 
 
     """
-    chemical_symbols = frames[0].get_chemical_symbols()
-    pos_nm = np.array([at.get_positions() for at in frames]) * 0.1  # nb. in nm
-    conn_traj = [bond_connectivity(pos_nm[i], chemical_symbols) for i in range(len(frames))]
-    graphs_traj = [nx.from_edgelist(ed) for ed in conn_traj]
+    graphs_traj = [atoms_to_graph(at) for at in frames]
 
     interest = []
     for i in range(len(frames) - 1):
@@ -50,7 +67,7 @@ def get_connectivity_change(frames):
     return interest
 
 
-def smooth_traj(filename_in, filename_out, smoothing_width=None, xyz_smoothing_strength=2.0, morse=None):
+def smooth_traj(filename_in, filename_out, smoothing_width=None, xyz_smoothing_strength=2.0, w_morse=0.0):
     """
 
     Parameters
@@ -119,7 +136,7 @@ def smooth_traj(filename_in, filename_out, smoothing_width=None, xyz_smoothing_s
 
     # smoothing in internal coordinates
     smoothed, errors = smooth_internal(xyzlist, atom_names, width=smoothing_width, bond_width=smoothing_width,
-                                       angle_width=smoothing_width, dihedral_width=smoothing_width, w_morse=args.morse)
+                                       angle_width=smoothing_width, dihedral_width=smoothing_width, w_morse=w_morse)
 
     # apply a bit of spline smoothing in cartesian coordinates to
     # correct for jitters
